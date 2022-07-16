@@ -3,7 +3,7 @@
 #include<vector>
 #include<numeric>
 
-/* To reduce the number of arguments passed to the functions, info is stored in a data structure I'll call the payload */
+/* To reduce the number of arguments passed to the functions, all info needed for our ciphers is stored in this data structure. */
 struct Payload {
     std::vector<int> keys {};                               /* Contains one or more keys for the ciphers */
     std::vector<std::string> output {};                     /* Contains all of our output for either stdout or a file */
@@ -30,7 +30,7 @@ struct Payload {
         std::cerr<<'\n';
     }
 
-    void displayOutput() {
+    void printOutput() {                                    /* This will output the text in payload to either the output file or stdout */
         for(auto line : output) {
             std::cout<<line<<std::endl;                     /* The endl is necessary to flush output and add a newline */
         }
@@ -38,12 +38,16 @@ struct Payload {
 };
 
 /* PROTOTYPES */
+/* To reduce typing, ive only listed the argument types in the prototype parameters. Names are included in the actual definitions. */
+
+/* CIPHER FUNCTIONS */
 void ceasar(Payload*);
 void rot13(Payload*);
 void affine(Payload*);
 
+/* AFFINE HELPER FUNCTIONS */
+int findModularInverse(Payload*);
 void createAffineEncryptedAlphabet(Payload*);
-
 bool affineValidateKeys(Payload*);
 
 
@@ -70,8 +74,8 @@ void ceasar(Payload* payload) {
         }
     }
     else if(payload->mode == 'd') {
-        for(std::string line; std::getline(inputFile, line);) {
-            for(int i = 0; i < line.size(); i++) {
+        for(std::string line; std::getline(inputFile, line);) {                     /* For each line in the file */
+            for(int i = 0; i < line.size(); i++) {                                  /* At present, case isn't kept, this will be fixed later */
                 if(isalpha(line.at(i))) {
                     decryptIndex = payload->getChIndex(line.at(i)) - payload->keys.at(0) % 26;
                     if(decryptIndex < 0) { /* We need to wrap the number around since negatives are invalid */
@@ -99,13 +103,21 @@ bool affineValidateKeys(Payload* payload) {
 /* An affine cipher function. Inverse modulus needs to be calculated for decryption. */
 /* A brute force method of calculating it is used since its a smaller modulo of only 26*/
 void affine(Payload* payload) {
-    int a = payload->keys.at(0);
-    int b = payload->keys.at(1);
+    /* Open up the file for input. The file should be valid at this point */
     std::ifstream inputFile(payload->filename);
 
     switch(payload->mode) {
         case 'e':
             /* create our encrypted alphabet first */
+            createAffineEncryptedAlphabet(payload);
+            for(std::string line; std::getline(inputFile, line);) {
+                for(int i = 0; i < line.size(); i++) {
+                    if(isalpha(line.at(i))) {
+                        line.at(i) = payload->modifiedAlphabet[payload->getChIndex(line.at(i))];
+                    }
+                }
+                payload->output.push_back(line); /* Put our encrypted line into the output vector */
+            }
             break;
         case 'd':
             /* find the modular inverse */
@@ -115,7 +127,16 @@ void affine(Payload* payload) {
 }
 
 void createAffineEncryptedAlphabet(Payload* payload) {
+    int a = payload->keys.at(0);
+    int b = payload->keys.at(1);
+    
     for(int i = 0; i < payload->alphabet.size(); i++) {
-        payload->modifiedAlphabet += payload->alphabet[i * a + b % 26];
+        payload->modifiedAlphabet += payload->alphabet[ (((i * a) + b) % 26) ];
     }
+
+    /* DEBUG: Display the contents of the modified alphabet */
+    // for(auto c : payload->modifiedAlphabet) {
+    //     std::cerr<<c<<' ';
+    // }
+    // std::cerr<<'\n';
 }

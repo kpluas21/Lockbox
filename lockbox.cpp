@@ -3,6 +3,17 @@
 /* All ciphers assume you're using the English alphabet and only encrypt/decrypt the 26 alphabetic characters.  */
 /* AUTHOR : Kevin Pluas */
 
+/* General notes on the program */
+/* When dealing with vectors, .at() is used to help detect out-of-range errors easily 
+   Im not a fan at how the command line arguments are handled. At present, it parses and compares the whole word just to use a single character. 
+   Ideally, a single char argument would be used and there can be some logic that detects undoable situations, such as both encrypt and decrypt being enabled. */
+
+/* TODO:
+    Add proper capitalization for the letters
+    Refactor everything dealing with the command line arguments
+    Remove some redundant formulas. Some of the ciphers and encryption algorithms can be consolidated
+    Add some more ciphers!
+ */
 
 /* lockbox.cpp : In charge of handling command line arguments and program flow */
 #include<iostream>  //for stdin+stdout
@@ -37,14 +48,16 @@ int main(int argc, char** argv) {
                 std::cerr<<"Invalid keys entered for an affine cipher\n";
                 return 1;
             }
-            return 0;
+            affine(payload);
+            break;
+        default:
+            break;
     }
-    payload->displayOutput();    
+    payload->printOutput();    
 
     /* 5. Validate keys */
     /* 6. Run the input through the cipher with their respective keys */
     /* 7. Output to file OR stdout depending on args */
-    /* 8. End program */
 
     delete payload;
     return 0;
@@ -106,6 +119,7 @@ int handleArguments(Payload* payload, int argc, char* argv[]) {
         
     }
 
-    payload->displayContents();
+    /* DEBUG: Display what the user typed as command line arguments */
+    //payload->displayContents();
     return 0; /* All good. */
 }
